@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 r"""
-SSHFS 挂载管理器（Windows）
+SSHFS Mount Manager（Windows）
 - 使用 SSHFS-Win 的 \\sshfs.r\user@host!port\path UNC 语法
 - 通过 Windows WNet API 挂载/解除挂载，不把密码拼到 net use 命令行
 - 仅在挂载成功后保存配置

@@ -4,26 +4,26 @@ cd /d "%~dp0"
 
 where pythonw.exe >nul 2>nul
 if not errorlevel 1 (
-    start "" pythonw.exe "%~dp0sshfs_mount_manager.py"
+    start "" pythonw.exe "%~dp0sshfs_mount_manager_windows.py"
     exit /b 0
 )
 
 where pyw.exe >nul 2>nul
 if not errorlevel 1 (
-    start "" pyw.exe -3 "%~dp0sshfs_mount_manager.py"
+    start "" pyw.exe -3 "%~dp0sshfs_mount_manager_windows.py"
     exit /b 0
 )
 
 where python.exe >nul 2>nul
 if not errorlevel 1 (
-    python.exe "%~dp0sshfs_mount_manager.py"
+    python.exe "%~dp0sshfs_mount_manager_windows.py"
     if errorlevel 1 pause
     exit /b %errorlevel%
 )
 
 where py.exe >nul 2>nul
 if not errorlevel 1 (
-    py.exe -3 "%~dp0sshfs_mount_manager.py"
+    py.exe -3 "%~dp0sshfs_mount_manager_windows.py"
     if errorlevel 1 pause
     exit /b %errorlevel%
 )

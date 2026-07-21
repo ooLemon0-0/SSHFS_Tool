@@ -1,8 +1,25 @@
 # SSHFS Mount Manager
 
-[简体中文](#简体中文) | [English](#english)
+一个用于把离线服务器目录挂载到本地，并交给 AI 编程工具阅读和分析的跨平台图形界面工具。
 
-<a id="简体中文"></a>
+A cross-platform GUI for mounting directories from offline SSH servers so local AI coding tools can inspect and analyze them.
+
+[简体中文](#chinese) | [English](#english)
+
+## Platform packages / 版本选择
+
+| Platform | Source folder | Launcher | Required filesystem tools |
+|---|---|---|---|
+| Windows 10/11 | [Windows version](./windows/) | [`start_sshs_manager.cmd`](./windows/start_sshs_manager.cmd) | [WinFsp](https://winfsp.dev/) + [SSHFS-Win](https://github.com/winfsp/sshfs-win) |
+| macOS | [macOS version](./macos/) | [`start_sshs_manager.command`](./macos/start_sshs_manager.command) | [macFUSE](https://macfuse.github.io/) + [SSHFS for macFUSE](https://github.com/macfuse/macfuse/wiki/File-Systems-%E2%80%90-SSHFS) |
+
+在 GitHub 仓库页面选择 **Code → Download ZIP**，可以一次下载 Windows 和 macOS 两个版本。下载后只需进入对应系统目录运行启动脚本。
+
+On the GitHub repository page, choose **Code → Download ZIP** to download both platform versions, then run the launcher inside the matching platform folder.
+
+---
+
+<a id="chinese"></a>
 
 ## 简体中文
 
@@ -12,149 +29,208 @@
 
 > 一台服务器无法连接外网，但可以通过 SSH 访问；本地的 AI 编程工具无法直接读取服务器目录，而人工逐个查找、打开和整理项目文件又非常费时。
 
-SSHFS Mount Manager 通过 SSHFS-Win，将服务器上的指定目录挂载为 Windows 本地盘符。挂载完成后，本地运行的 AI 工具、代码编辑器和文件分析工具可以像读取普通文件夹一样读取该盘符，从而帮助用户：
+SSHFS Mount Manager 将服务器上的指定目录挂载为本地文件系统：
+
+```text
+离线服务器目录
+        ↓ SSH / SFTP
+Windows 盘符或 macOS 本地目录
+        ↓
+Codex、Cursor、Claude Code、VS Code 等本地工具
+```
+
+挂载完成后，本地运行的 AI 工具、代码编辑器和文件分析工具可以像读取普通文件夹一样读取远程项目，从而帮助用户：
 
 - 分析陌生项目的目录结构；
 - 查找训练、推理和配置入口；
 - 追踪代码调用关系；
 - 总结模块功能；
+- 搜索指定类、函数和配置；
 - 减少手动浏览和整理服务器文件的工作量。
 
-例如，远程服务器目录：
+例如，服务器目录：
 
 ```text
 /home/user/project
 ```
 
-可以被挂载为：
+在 Windows 上可以挂载为：
 
 ```text
 X:\
 ```
 
-随后可以在本地 Codex、Cursor、Claude Code、VS Code 或其他能够读取本地工作区的工具中打开 `X:\`。
+在 macOS 上可以挂载为：
 
-SSHFS 并不会预先把整个项目完整复制到本地。它建立的是一个基于 SSH/SFTP 的远程文件系统映射：本地程序访问盘符中的文件时，SSHFS-Win 才通过 SSH 从服务器读取对应内容。
+```text
+~/SSHFS-Mount
+```
 
-本项目为上述流程提供一个可复用的 Windows 图形界面，用于填写连接信息、新建挂载、解除映射、查看当前网络盘，以及清理解除挂载后可能残留的红叉“幽灵盘”。
+SSHFS 不会预先把整个项目完整复制到本地。它建立的是基于 SSH/SFTP 的远程文件系统映射：本地程序访问某个文件时，SSHFS 才从服务器读取对应内容。
 
-项目中**不包含任何预设的服务器地址、用户名、密码或远程目录**。第一次使用时需要由用户自行填写。程序只会在挂载成功后，将连接设置保存到当前 Windows 用户的本地配置目录中。
+项目中不包含任何预设的服务器地址、用户名、密码或远程目录。第一次使用时需要由用户自行填写。程序只会在挂载成功后，将连接设置保存到当前操作系统用户的本地配置目录中。
 
-### 功能
+### 项目结构
 
-- 将服务器绝对路径挂载为 Windows 盘符；
-- 在图形界面中填写 SSH 主机、端口、用户名、密码、远程目录和盘符；
-- 一键新建 SSHFS 挂载；
-- 解除已有网络盘映射；
-- 显示当前 Windows 网络盘列表；
-- 从程序中直接打开挂载盘；
-- 保存上一次成功挂载的连接设置；
-- 使用 Windows DPAPI 加密保存密码，不以明文写入配置文件；
-- 通过 Windows WNet API 建立连接，不把密码拼接进 `net use` 命令行；
-- 解除挂载后主动通知 Windows Explorer 刷新盘符；
-- 提供“重启 Explorer”兜底按钮，用于清理红叉幽灵盘。
+```text
+SSHFS-Mount-Manager/
+├── README.md
+├── windows/
+│   ├── sshfs_mount_manager_windows.py
+│   └── start_sshs_manager.cmd
+└── macos/
+    ├── sshfs_mount_manager_macos.py
+    └── start_sshs_manager.command
+```
 
-### 依赖与安装
+### 通用功能
 
-程序需要：
+- 在图形界面中填写 SSH 主机、端口、用户名、密码和远程目录；
+- 新建 SSHFS 挂载；
+- 解除已有挂载；
+- 显示当前 SSHFS 网络盘或挂载卷；
+- 从程序中直接打开挂载位置；
+- 只在挂载成功后保存连接设置；
+- 避免在项目源码中写入个人服务器配置；
+- 提供环境检查；
+- 提供文件管理器重启按钮，用于清理解除挂载后残留的幽灵盘或幽灵卷。
 
-- Windows 10 或 Windows 11；
-- 带有 `tkinter` 的 Python 3；
-- WinFsp；
-- SSHFS-Win。
+### Windows 版本
 
-**运行程序之前，请先下载并安装下面两个 MSI。建议先安装 WinFsp，再安装 SSHFS-Win。**
+#### 安装依赖
+
+运行 Windows 版本之前，必须先安装下面两个 MSI。建议按照以下顺序安装：
 
 1. [WinFsp](https://winfsp.dev/)  
-   请从 WinFsp 官方网站下载 Windows `.msi` 安装包。
+   从官方网站下载并安装 Windows `.msi`。
 
 2. [SSHFS-Win](https://github.com/winfsp/sshfs-win)  
-   请从 SSHFS-Win 项目页面或 Releases 下载 Windows `.msi` 安装包。
+   从项目页面或 Releases 下载并安装 Windows `.msi`。
 
-### 启动
-
-克隆或下载项目后，双击：
+安装完成后，进入 `windows` 目录并双击：
 
 ```text
 start_sshs_manager.cmd
 ```
 
-也可以在项目目录中打开 PowerShell，执行：
+也可以在 PowerShell 中执行：
 
 ```powershell
-python .\sshfs_mount_manager.py
+python .\windows\sshfs_mount_manager_windows.py
 ```
+
+#### Windows 密码保存
+
+Windows 版本使用 Windows DPAPI 加密密码，并将配置保存到：
+
+```text
+%APPDATA%\SSHFS-Mount-Manager\config.json
+```
+
+密码不会以明文写入仓库。DPAPI 密文通常只能由同一台电脑上的同一个 Windows 用户解密。
+
+#### Windows 幽灵盘
+
+Windows Explorer 偶尔会在底层映射已经解除后，继续显示一个带红叉的旧盘符。
+
+程序会先发送 Windows Shell 的盘符移除通知。如果图标仍然存在，可以点击：
+
+```text
+重启 Explorer（清幽灵盘）
+```
+
+该操作会重启任务栏、桌面外壳和文件资源管理器窗口，但不会重启 Windows，也不会删除服务器文件。
+
+### macOS 版本
+
+#### 安装依赖
+
+macOS 版本需要 macFUSE 与 SSHFS。可以使用下面两种安装方式之一。
+
+##### 方式一：下载安装包
+
+1. [下载 macFUSE](https://macfuse.github.io/)
+2. [下载 SSHFS for macFUSE](https://github.com/macfuse/macfuse/wiki/File-Systems-%E2%80%90-SSHFS)
+
+先安装 macFUSE，再安装 SSHFS。安装过程中如果 macOS 要求在“系统设置 → 隐私与安全性”中允许系统软件，按照系统提示操作，并在要求时重启电脑。
+
+##### 方式二：Homebrew
+
+已经安装 Homebrew 时，可以执行：
+
+```bash
+brew install --cask sshfs-mac
+```
+
+Homebrew 的 `sshfs-mac` cask 会声明 macFUSE 依赖。
+
+#### 启动 macOS 版本
+
+进入 `macos` 目录，双击：
+
+```text
+start_sshs_manager.command
+```
+
+第一次运行时，如果系统提示脚本没有执行权限，在终端中执行：
+
+```bash
+chmod +x ./macos/start_sshs_manager.command
+./macos/start_sshs_manager.command
+```
+
+也可以直接运行 Python 源码：
+
+```bash
+python3 ./macos/sshfs_mount_manager_macos.py
+```
+
+#### macOS 密码保存
+
+macOS 版本将非敏感设置保存到：
+
+```text
+~/Library/Application Support/SSHFS Mount Manager/config.json
+```
+
+启用密码保存后，密码会写入当前用户的 macOS 钥匙串，而不会以明文写入 JSON 或仓库目录。
+
+挂载时，程序通过 SSHFS 的 `password_stdin` 选项将密码传给 SSHFS，不会把密码放进可见的 SSHFS 命令行参数中。
+
+#### macOS 幽灵卷
+
+macOS Finder 偶尔可能在解除挂载后继续显示旧卷。可以点击：
+
+```text
+重启 Finder（清幽灵卷）
+```
+
+该操作会关闭并重新启动 Finder 窗口，但不会重启 macOS，也不会删除服务器文件。
 
 ### 第一次使用
 
-请在界面中填写：
+请填写：
 
 - SSH 服务器 IP 或主机名；
 - SSH 端口；
 - SSH 用户名；
 - SSH 密码；
 - 服务器绝对目录，例如 `/home/user/project`；
-- Windows 盘符，例如 `X:`。
+- Windows 盘符，或 macOS 本地空目录。
 
-点击“新建挂载”。只有挂载成功后，程序才会保存本次连接信息。
-
-挂载完成后，可以：
-
-1. 在资源管理器中打开对应盘符；
-2. 使用本地 AI 编程工具或编辑器打开该盘符；
-3. 将它作为项目工作区进行只读分析或代码浏览。
-
-### 本地配置与密码保存
-
-配置保存在仓库目录之外：
-
-```text
-%APPDATA%\SSHFS-Mount-Manager\config.json
-```
-
-启用密码保存后，密码会使用 Windows DPAPI 加密。通常只有同一台电脑上的同一个 Windows 用户能够解密。
-
-源代码目录中不会写入用户自己的连接配置。
+挂载完成后，可以在本地 AI 编程工具中打开挂载位置，并将其作为工作区分析。
 
 ### 重要安全说明
 
 SSHFS 暴露的是服务器上的真实目录，不是独立副本，也不是天然只读镜像。
 
-- SSH 账号有写权限时，编辑器、AI Agent 或其他本地程序可能修改、创建或删除远程文件；
+- SSH 账号有写权限时，本地编辑器、AI Agent 或其他程序可能修改、创建或删除远程文件；
 - 需要强制只读时，应使用只读服务器账号，或在服务器端设置禁止写入的权限；
 - 即使服务器本身无法访问外网，通过 SSHFS 读取的内容仍会传输到本地电脑；
-- 云端 AI 工具可能会将其读取的代码片段发送到模型服务，具体行为取决于所使用的工具、账号类型和数据设置；
+- 云端 AI 工具可能会将其读取的代码片段发送到模型服务，具体行为取决于工具、账号类型和数据设置；
 - 在处理公司源码、内部文档或敏感数据前，应先确认所在组织的数据安全规定；
-- 正在复制、移动或重命名文件时，不要重启 Explorer。
-
-### 解除挂载
-
-在程序中选择对应盘符，然后点击“解除所选盘符”。
-
-解除挂载只会删除 Windows 与服务器目录之间的映射关系，不会删除服务器上的文件。
-
-建议在解除前关闭正在访问该盘符的：
-
-- AI 编程工具；
-- VS Code 或其他编辑器；
-- 文件资源管理器窗口；
-- 终端和脚本进程。
-
-### 幽灵盘说明
-
-Windows Explorer 偶尔会在网络映射已经解除后，继续显示一个带红叉的旧盘符。
-
-这种情况下，底层 SSHFS 映射通常已经不存在，只是 Explorer 仍保留着旧的显示缓存。
-
-程序会先发送 Windows Shell 的盘符移除通知。如果图标仍然存在，可以点击“重启 Explorer”。
-
-该操作会重新启动：
-
-- Windows 任务栏；
-- 桌面外壳；
-- 已打开的文件资源管理器窗口。
-
-它不会重启 Windows，也不会删除本地或服务器文件。
+- 解除挂载前，应关闭正在访问挂载位置的 AI 工具、编辑器、终端和文件管理器；
+- 正在复制、移动或重命名文件时，不要强制解除挂载或重启文件管理器。
 
 ---
 
@@ -164,109 +240,122 @@ Windows Explorer 偶尔会在网络映射已经解除后，继续显示一个带
 
 ### Project overview
 
-SSHFS Mount Manager is designed for a common offline-server workflow:
+This project is intended for the following workflow:
 
-> A remote server cannot access the public internet but is reachable through SSH, while a local AI coding tool needs to inspect the files without manually browsing the entire project.
+> A server cannot access the public internet but is reachable through SSH. A local AI coding tool needs to inspect the remote project, while manually opening and organizing every file would take too much time.
 
-The application mounts a selected remote Linux directory as a Windows drive through SSHFS-Win. After mounting, locally running AI tools, code editors, and analysis utilities can open the drive as a normal workspace and help inspect project structure, locate entry points, trace code paths, and summarize modules.
-
-For example:
+SSHFS Mount Manager maps a selected server directory into the local filesystem:
 
 ```text
-Remote: /home/user/project
-Local:  X:\
+Offline server directory
+        ↓ SSH / SFTP
+Windows drive or macOS mount directory
+        ↓
+Codex, Cursor, Claude Code, VS Code, and other local tools
 ```
 
-SSHFS does not make a complete local copy in advance. It creates a remote filesystem mapping over SSH/SFTP, and files are transferred when local applications access them.
+After mounting, locally running AI tools, code editors, and analysis utilities can inspect the remote project like a normal local workspace. This can reduce the work required to understand directory structure, locate entry points, trace code paths, search functions, and summarize modules.
 
-The project provides a reusable Windows GUI for entering SSH connection details, mounting a drive, disconnecting an existing mapping, reviewing current network drives, and restarting Windows Explorer when a disconnected drive remains visible as a red-cross ghost drive.
+SSHFS does not create a complete local copy in advance. It creates a remote filesystem mapping over SSH/SFTP and transfers files when local applications access them.
 
-The repository contains **no bundled server address, username, password, or remote directory**. Users provide their own connection details on first use. Settings are stored locally only after a successful mount.
+The repository contains no bundled server address, username, password, or remote directory. Users provide their own connection details on first use. Settings are saved locally only after a successful mount.
 
-### Features
-
-- Mount a remote absolute path as a Windows drive letter.
-- Enter the SSH host, port, username, password, remote directory, and drive letter in the GUI.
-- Disconnect an existing network-drive mapping.
-- Display current Windows network-drive mappings.
-- Open the mounted drive directly from the application.
-- Save the last successful connection settings.
-- Protect a saved password with Windows DPAPI instead of storing it as plaintext.
-- Keep the password out of the `net use` command line by calling the Windows WNet API directly.
-- Notify Windows Explorer after unmounting to reduce stale drive icons.
-- Provide a fallback **Restart Explorer** button for clearing red-cross ghost drives.
-
-### Required software
-
-The application requires:
-
-- Windows 10 or Windows 11;
-- Python 3 with `tkinter`;
-- WinFsp;
-- SSHFS-Win.
-
-**Before running the application, download and install both MSI installers. Install WinFsp first, then SSHFS-Win.**
-
-1. [WinFsp](https://winfsp.dev/)  
-   Download the Windows `.msi` installer from the official WinFsp website.
-
-2. [SSHFS-Win](https://github.com/winfsp/sshfs-win)  
-   Download the Windows `.msi` installer from the SSHFS-Win project page or its releases.
-
-### Run
-
-Clone or download this repository, then run:
+### Project layout
 
 ```text
-start_sshs_manager.cmd
+SSHFS-Mount-Manager/
+├── README.md
+├── windows/
+│   ├── sshfs_mount_manager_windows.py
+│   └── start_sshs_manager.cmd
+└── macos/
+    ├── sshfs_mount_manager_macos.py
+    └── start_sshs_manager.command
 ```
 
-Alternatively, open PowerShell in the project directory and run:
+### Common features
+
+- Enter SSH host, port, username, password, and remote directory in a GUI.
+- Create and remove SSHFS mounts.
+- Display current SSHFS drives or volumes.
+- Open the mounted location from the application.
+- Save settings only after a successful mount.
+- Keep personal server configuration out of the source tree.
+- Check the local SSHFS environment.
+- Restart Explorer or Finder to clear stale ghost drives or volumes.
+
+### Windows
+
+Install both MSI packages before running the Windows version:
+
+1. [WinFsp](https://winfsp.dev/)
+2. [SSHFS-Win](https://github.com/winfsp/sshfs-win)
+
+Then run:
+
+```text
+windows\start_sshs_manager.cmd
+```
+
+Or:
 
 ```powershell
-python .\sshfs_mount_manager.py
+python .\windows\sshfs_mount_manager_windows.py
 ```
 
-### First use
-
-Enter:
-
-- SSH server IP address or hostname;
-- SSH port;
-- SSH username;
-- SSH password;
-- Absolute remote directory, for example `/home/user/project`;
-- Windows drive letter, for example `X:`.
-
-Click **New Mount** in the GUI. Connection details are saved only after the mount succeeds.
-
-After mounting, open the mapped drive in a local AI coding tool or editor and use it as a workspace for code inspection.
-
-### Local settings and password storage
-
-Settings are stored outside the repository at:
+The Windows version protects saved passwords with Windows DPAPI and stores settings at:
 
 ```text
 %APPDATA%\SSHFS-Mount-Manager\config.json
 ```
 
-When password saving is enabled, the password is encrypted with Windows DPAPI and is normally decryptable only by the same Windows user on the same computer.
+### macOS
 
-No personal connection configuration is written into the source tree.
+Install macFUSE and SSHFS:
+
+1. [macFUSE](https://macfuse.github.io/)
+2. [SSHFS for macFUSE](https://github.com/macfuse/macfuse/wiki/File-Systems-%E2%80%90-SSHFS)
+
+Homebrew users can install the macOS package with:
+
+```bash
+brew install --cask sshfs-mac
+```
+
+Then run:
+
+```bash
+./macos/start_sshs_manager.command
+```
+
+If needed:
+
+```bash
+chmod +x ./macos/start_sshs_manager.command
+```
+
+Or run the source directly:
+
+```bash
+python3 ./macos/sshfs_mount_manager_macos.py
+```
+
+The macOS version stores non-secret settings at:
+
+```text
+~/Library/Application Support/SSHFS Mount Manager/config.json
+```
+
+Remembered passwords are stored in the current user's macOS Keychain.
 
 ### Security notes
 
-SSHFS exposes the real remote directory; it is not an independent copy or a read-only mirror.
+SSHFS exposes the real remote directory. It is not an independent copy or an inherently read-only mirror.
 
-- If the SSH account has write permission, local editors or AI agents may modify remote files.
-- For enforced read-only access, use a server account or server-side permissions that deny writes.
-- File contents read through SSHFS are transferred to the local computer.
-- Cloud-based AI tools may send selected code or context to their model service, depending on the tool and account settings.
-- Confirm your organization’s source-code and data-handling rules before processing internal or sensitive files.
-- Do not restart Explorer while files are being copied, moved, or renamed.
-
-### Ghost-drive behavior
-
-Windows Explorer can occasionally keep a disconnected network drive visible with a red cross even after the underlying mapping has already been removed.
-
-The application first sends a Windows Shell drive-removal notification. If the icon remains, use **Restart Explorer**. This restarts the taskbar, desktop shell, and open File Explorer windows; it does not restart Windows or delete remote files.
+- If the SSH account has write permission, local editors and AI agents may modify remote files.
+- For enforced read-only access, use a read-only server account or server-side permissions.
+- Files accessed through SSHFS are transferred to the local computer.
+- Cloud-based AI tools may send selected code or context to their model service.
+- Confirm organizational source-code and data-handling policies before processing internal or sensitive files.
+- Close applications that are using the mount before unmounting.
+- Do not force-unmount or restart the file manager while files are being copied, moved, or renamed.
