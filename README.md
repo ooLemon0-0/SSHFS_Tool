@@ -5,6 +5,14 @@
 A cross-platform GUI for mounting directories from offline SSH servers so local AI coding tools can inspect and analyze them.
 
 [简体中文](#chinese) | [English](#english)
+## 下载 / Download
+
+| 平台 | 最新版本 | 源码 |
+|---|---|---|
+| Windows 10/11 | [下载 Windows 版](https://github.com/ooLemon0-0/SSHFS_Tool/releases/latest/download/SSHFS-Mount-Manager-Windows.zip) | [查看 Windows 源码](./windows/) |
+| macOS | [下载 macOS 版](https://github.com/ooLemon0-0/SSHFS_Tool/releases/latest/download/SSHFS-Mount-Manager-macOS.zip) | [查看 macOS 源码](./macos/) |
+
+[查看最新 Release 和更新说明](https://github.com/ooLemon0-0/SSHFS_Tool/releases/latest)
 
 ## Platform packages / 版本选择
 
