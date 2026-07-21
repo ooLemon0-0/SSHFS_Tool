@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# macOS
+.DS_Store
+
+# Local build and release files
+dist/
+release-assets/
+*.zip
+
+# IDE
+.vscode/
+.idea/
